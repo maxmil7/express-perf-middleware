@@ -13,15 +13,17 @@ module.exports = function ({ routeKey='perf', interval=30000 }={}) {
             fileName = `${Date.now()}.txt`;
             stream = fs.createWriteStream(fileName);
             let startCPU = process.cpuUsage();
-            let currentCPU;
+            let startUptime = process.uptime();
             let startTime = Date.now();
             intervalId = setInterval(() => {
-                cpuDiff = process.cpuUsage(startCPU);
+                let cpuDiff = process.cpuUsage(startCPU);
+                cpuPercent = (cpuDiff.system + cpuDiff.user)/((process.uptime() - startUptime) * 10000);
+                startUptime = process.uptime();
                 startCPU = process.cpuUsage();
                 const memUsage = process.memoryUsage();
                 let metrics = {
                     time: Math.floor((Date.now() - startTime)/1000),
-                    cpu: cpuDiff.user + cpuDiff.system,
+                    cpu: Math.round(cpuPercent * 10)/10,
                     rss: Math.floor(memUsage.rss*1e-6),
                     heapT: Math.floor(memUsage.heapTotal*1e-6),
                     heapU: Math.floor(memUsage.heapUsed*1e-6),
