@@ -10,16 +10,20 @@ module.exports = function ({ routeKey='perf', interval=30000 }={}) {
                 res.send(`Capture metrics in progress. Call /${routeKey}/end first`);
                 return;
             }
-            fileName = `${Date.now()}.txt`;
+            fileName = `perf-${Date.now()}.txt`;
             stream = fs.createWriteStream(fileName);
             let startCPU = process.cpuUsage();
             let startUptime = process.uptime();
             let startTime = Date.now();
             intervalId = setInterval(() => {
-                let cpuDiff = process.cpuUsage(startCPU);
+                let newCPU = process.cpuUsage();
+                let cpuDiff = {
+                    user: newCPU.user - startCPU.user,
+                    system: newCPU.system - startCPU.system
+                }
                 cpuPercent = (cpuDiff.system + cpuDiff.user)/((process.uptime() - startUptime) * 10000);
                 startUptime = process.uptime();
-                startCPU = process.cpuUsage();
+                startCPU = newCPU;
                 const memUsage = process.memoryUsage();
                 let metrics = {
                     time: Math.floor((Date.now() - startTime)/1000),
